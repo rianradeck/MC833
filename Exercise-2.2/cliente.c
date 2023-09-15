@@ -77,17 +77,33 @@ int main(int argc, char **argv) {
 		if(recvline[recvline_offset - 1] == '\n')
 			break;
 	}
+
+	if (n < 0) {
+		perror("read error");
+		exit(1);
+	}
+
 	recvline[recvline_offset] = 0;
 
 	if (fputs(recvline, stdout) == EOF) {
 		perror("fputs error");
 		exit(1);
 	}
+	
+	if(strcmp(recvline, "SIMULE: CPU_INTENSIVA") == 0)
+	{
+		sleep(1);
+		char response[] = "SIMULACAO: CPU_INTENSIVA CONCLUIDA\n";
+		write(sockfd, response, strlen(response));
+	}
+	else if(strcmp(recvline, "SIMULE: MEMORIA_INTENSIVA") == 0)
+	{
+		sleep(1);
+		char response[] = "SIMULACAO: MEMORIA_INTENSIVA ONCLUIDA\n";
+		write(sockfd, response, strlen(response));
+	}
 
-    if (n < 0) {
-        perror("read error");
-        exit(1);
-    }
+	close(sockfd);
 	
     exit(0);
 }

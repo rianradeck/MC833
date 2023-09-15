@@ -15,6 +15,7 @@
 
 int main(int argc, char **argv) {
     int    sockfd, n;
+	int    recvline_offset = 0;
     char   recvline[MAXLINE + 1];
     char   error[MAXLINE + 1];
     struct sockaddr_in servaddr;
@@ -49,6 +50,7 @@ int main(int argc, char **argv) {
     }
 
 	/* Codigo para obter (#IP, #porta local) da questao 5*/
+    bzero(&servaddr, sizeof(servaddr));
 	socklen_t sz = sizeof(servaddr);
 	if(getsockname(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
 	{
@@ -57,18 +59,30 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-	
-	char buff[MAXLINE + 1];
-	fgets(buff, MAXLINE, stdin);
-	write(sockfd, buff, strlen(buff));
 
-    while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
-        recvline[n] = 0;
-        if (fputs(recvline, stdout) == EOF) {
-            perror("fputs error");
-            exit(1);
-        }
-    }
+    bzero(&servaddr, sizeof(servaddr));
+	if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
+	{
+		perror("getpeername");
+		exit(1);
+	}
+	printf("Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+
+	//char buff[MAXLINE + 1];
+	//fgets(buff, MAXLINE, stdin);
+	//write(sockfd, buff, strlen(buff));
+
+    while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
+		recvline_offset += n;
+		if(recvline[recvline_offset - 1] == '\n')
+			break;
+	}
+	recvline[recvline_offset] = 0;
+
+	if (fputs(recvline, stdout) == EOF) {
+		perror("fputs error");
+		exit(1);
+	}
 
     if (n < 0) {
         perror("read error");

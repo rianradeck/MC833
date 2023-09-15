@@ -95,6 +95,7 @@ int main (int argc, char **argv) {
             }
             
             close(connfd);
+			exit(0);
         }        
     }
     return(0);

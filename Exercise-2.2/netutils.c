@@ -30,9 +30,18 @@ int Listen(int sockfd, int backlog){ WRAPPER(listen, sockfd, backlog); }
 
 int Getsockname(int sockfd, struct sockaddr_in *addr)
 {
-    	bzero(addr, sizeof(struct sockaddr_in));
+    	//bzero(addr, sizeof(struct sockaddr_in));
+	//socklen_t sz = sizeof(struct sockaddr_in);
+	//WRAPPER(getsockname, sockfd, (struct sockaddr*)addr, &sz);
+	//
+	bzero(addr, sizeof(struct sockaddr_in));
 	socklen_t sz = sizeof(struct sockaddr_in);
-	WRAPPER(getsockname, sockfd, (struct sockaddr*)addr, &sz);
+	if(getsockname(sockfd, (struct sockaddr*)addr, &sz) == -1)
+	{
+		perror("getsockname");
+		exit(1);
+	}
+	return 0;
 }
 
 void get_time(char buf[]){

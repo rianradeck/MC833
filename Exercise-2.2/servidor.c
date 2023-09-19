@@ -16,6 +16,10 @@
 #define MAXDATASIZE 4096
 
 int main (int argc, char **argv) {
+    FILE *fp;
+    fp = fopen("log.txt", "w");
+    fclose(fp);
+
     int    listenfd, connfd;
     struct sockaddr_in servaddr, peeraddr;
     char   buf[MAXDATASIZE + 1];
@@ -119,7 +123,8 @@ int main (int argc, char **argv) {
 
             close(connfd);
             exit(0);
-        }        
+        }
     }
+    fclose(fp);
     return(0);
 }

@@ -53,8 +53,11 @@ void get_time(char buf[]){
 }
 
 void Log(const char buf[]){
+	FILE *fp;
+	fp = fopen("log.txt", "a");
 	int pid = getpid();
 	char stime[4096];
 	get_time(stime);
-	printf("[%s] %d: %s\n", stime, pid, buf);
+	fprintf(fp, "[%s] %d: %s\n", stime, pid, buf);
+	fclose(fp);
 }

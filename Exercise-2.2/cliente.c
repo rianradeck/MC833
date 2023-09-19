@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
     int    recvline_offset = 0;
     char   recvline[MAXLINE + 1];
     char   error[MAXLINE + 1];
-    char   logbuf[MAXLINE + 1];
     struct sockaddr_in servaddr;
     
     //Adicionamos mais um parametro para que o cliente possa
@@ -50,8 +49,7 @@ int main(int argc, char **argv) {
     socklen_t sz = sizeof(servaddr);
     Getsockname(sockfd, &servaddr);
 
-    snprintf(logbuf, sizeof(logbuf), "Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-    Log(logbuf);
+    printf("Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
 
     //socklen_t sz;
     bzero(&servaddr, sizeof(servaddr));
@@ -60,8 +58,7 @@ int main(int argc, char **argv) {
         perror("getpeername");
         exit(1);
     }
-    snprintf(logbuf, sizeof(logbuf), "Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-    Log(logbuf);
+    printf("Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
 
     //char buff[MAXLINE + 1];
     //fgets(buff, MAXLINE, stdin);

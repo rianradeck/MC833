@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "netutils.h"
+
 #define LISTENQ 10
 #define MAXDATASIZE 100
 
@@ -45,7 +47,9 @@ int main (int argc, char **argv) {
         exit(1);
     }
 
-    printf("Bound to %d\n", (int)ntohs(servaddr.sin_port));
+    char logbuf[MAXDATASIZE + 1];
+    snprintf(logbuf, sizeof(logbuf), "Bound to %d\n", (int)ntohs(servaddr.sin_port));
+    Log(logbuf);
 
     if (listen(listenfd, LISTENQ) == -1) {
         perror("listen");
@@ -55,11 +59,8 @@ int main (int argc, char **argv) {
     pid_t connpid;
 
     for ( ; ; ) {
-        if ((connfd = accept(listenfd, (struct sockaddr *) NULL, NULL)) == -1)
-        {
-            perror("accept");
-            exit(1);
-        }
+        connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
+        
         if((connpid = fork()) == 0)
         {
             close(listenfd);
@@ -71,29 +72,55 @@ int main (int argc, char **argv) {
                 perror("getpeername");
                 exit(1);
             }
-            printf("Remote client connected: %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port));
-        
+            snprintf(logbuf, sizeof(logbuf), "Remote client connected: %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port));
+            Log(logbuf);
 
             ticks = time(NULL);
-            snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\n", ctime(&ticks));
+            snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\nPID: %d\n", ctime(&ticks), getpid());
             write(connfd, buf, strlen(buf));
-
-            //Recebe dados do cliente. Recebe exatamente uma linha do stdin do cliente, então para quando recebe um '\n'
-            int n;
-            while((n = read(connfd, buf, MAXDATASIZE)) > 0)
-            {
-                buf[n] = 0;
-                if(fputs(buf, stdout) == EOF)
-                {
-                    perror("fputs");
-                    exit(1);
-                }
-                // if(buf[n - 1] == '\n')
-                //     break;
-                if(strcmp(buf, "exit") == 0)
+            int k;
+            while((k = read(connfd, buf, MAXDATASIZE)) > 0)
+                if(buf[k - 1] == '\n')
                     break;
+            Log("SENT A HELLO AND RECIEVED ANY RESPONSE, STARTING COMMUNICATION");
+
+            // Comunication loop
+            for(int cnt = 5;cnt--;)
+            {
+                char cbuf[MAXDATASIZE + 1];
+                srand(time(NULL));
+                char s[30];
+                if(rand() % 2)
+                    strcpy(s, "SIMULE: MEMORIA_INTENSIVA\n");
+                else
+                    strcpy(s, "SIMULE: CPU_INTENSIVA\n");
+                if(cnt == 0)
+                    strcpy(s, "DC\n");
+
+                snprintf(cbuf, sizeof(cbuf), "%s", s);
+                write(connfd, cbuf, strlen(cbuf));
+               
+                snprintf(logbuf, sizeof(logbuf), "Sending -> %s", s);
+                Log(logbuf);
+
+                //Recebe dados do cliente. Recebe exatamente uma linha do stdin do cliente, então para quando recebe um '\n'
+                int n;
+                while((n = read(connfd, cbuf, MAXDATASIZE)) > 0)
+                {
+                    cbuf[n] = 0;
+                    // if(fputs(cbuf, stdout) == EOF)
+                    // {
+                    //     perror("fputs");
+                    //     exit(1);
+                    // }
+                    snprintf(logbuf, sizeof(logbuf) * 2, "Recieved -> %s", cbuf);
+                    Log(logbuf);
+
+                    if(cbuf[n - 1] == '\n')
+                        break;
+                }
             }
-            
+
             close(connfd);
 			exit(0);
         }        

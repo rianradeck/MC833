@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "netutils.h"
+
 #define MAXLINE 4096
 
 int main(int argc, char **argv) {
@@ -18,6 +20,7 @@ int main(int argc, char **argv) {
 	int    recvline_offset = 0;
     char   recvline[MAXLINE + 1];
     char   error[MAXLINE + 1];
+    char   logbuf[MAXLINE + 1];
     struct sockaddr_in servaddr;
 	
 	//Adicionamos mais um parametro para que o cliente possa
@@ -58,7 +61,8 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	printf("Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+	snprintf(logbuf, sizeof(logbuf), "Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+	Log(logbuf);
 
     bzero(&servaddr, sizeof(servaddr));
 	if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
@@ -66,43 +70,57 @@ int main(int argc, char **argv) {
 		perror("getpeername");
 		exit(1);
 	}
-	printf("Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+	snprintf(logbuf, sizeof(logbuf), "Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+	Log(logbuf);
 
 	//char buff[MAXLINE + 1];
 	//fgets(buff, MAXLINE, stdin);
 	//write(sockfd, buff, strlen(buff));
 
-    while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
-		recvline_offset += n;
-		if(recvline[recvline_offset - 1] == '\n')
+	for(;;){
+	    while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
+			recvline_offset += n;
+			if(recvline[recvline_offset - 1] == '\n')
+				break;
+		}
+
+		if (n < 0) {
+			perror("read error");
+			exit(1);
+		}
+
+		recvline[recvline_offset] = 0;
+
+		puts("-------- RECIEVED FROM SERVER -----------");
+		if (fputs(recvline, stdout) == EOF) {
+			perror("fputs error");
+			exit(1);
+		}
+		puts("-----------------------------------------");
+		
+		if(strcmp(recvline, "SIMULE: CPU_INTENSIVA\n") == 0)
+		{
+			puts("Starting CPU stress");
+			sleep(5);
+			char response[] = "SIMULACAO: CPU_INTENSIVA CONCLUIDA\n";
+			write(sockfd, response, strlen(response));
+		}
+		else if(strcmp(recvline, "SIMULE: MEMORIA_INTENSIVA\n") == 0)
+		{
+			puts("Starting MEM stress");
+			sleep(5);
+			char response[] = "SIMULACAO: MEMORIA_INTENSIVA CONCLUIDA\n";
+			write(sockfd, response, strlen(response));
+		} else if(strcmp(recvline, "DC\n") == 0){
+			char response[] = "DISCONNECTED\n";
+			write(sockfd, response, strlen(response));
 			break;
+		} else {
+			char response[] = "OPERACAO INVALIDA\n";
+			write(sockfd, response, strlen(response));
+		}
+		recvline_offset = 0;
 	}
-
-	if (n < 0) {
-		perror("read error");
-		exit(1);
-	}
-
-	recvline[recvline_offset] = 0;
-
-	if (fputs(recvline, stdout) == EOF) {
-		perror("fputs error");
-		exit(1);
-	}
-	
-	if(strcmp(recvline, "SIMULE: CPU_INTENSIVA") == 0)
-	{
-		sleep(1);
-		char response[] = "SIMULACAO: CPU_INTENSIVA CONCLUIDA\n";
-		write(sockfd, response, strlen(response));
-	}
-	else if(strcmp(recvline, "SIMULE: MEMORIA_INTENSIVA") == 0)
-	{
-		sleep(1);
-		char response[] = "SIMULACAO: MEMORIA_INTENSIVA ONCLUIDA\n";
-		write(sockfd, response, strlen(response));
-	}
-
 	close(sockfd);
 	
     exit(0);

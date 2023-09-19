@@ -10,6 +10,7 @@
 if(ret < 0) \
 { \
 	perror(#X); \
+	exit(1); \
 } \
 return ret
 
@@ -23,6 +24,8 @@ int Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { WRAPPER(b
 
 int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { WRAPPER(connect, sockfd, addr, addrlen); }
 
+int Listen(int sockfd, int backlog){ WRAPPER(listen, sockfd, backlog); }
+
 void get_time(char buf[]){
 	struct timeval tp;
 	gettimeofday(&tp, 0);
@@ -31,7 +34,7 @@ void get_time(char buf[]){
 	snprintf(buf, sizeof(char) * 58, "%02d:%02d:%02d.%03ld", t->tm_hour, t->tm_min, t->tm_sec, tp.tv_usec/1000);
 }
 
-void Log(char buf[]){
+void Log(const char buf[]){
 	int pid = getpid();
 	char stime[4096];
 	get_time(stime);

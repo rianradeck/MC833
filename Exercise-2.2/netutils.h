@@ -9,4 +9,6 @@ int Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
-void Log(char buf[]);
+int Listen(int sockfd, int backlog);
+
+void Log(const char buf[]);

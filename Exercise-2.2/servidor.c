@@ -44,10 +44,7 @@ int main (int argc, char **argv) {
     snprintf(logbuf, sizeof(logbuf), "Bound to %d\n", (int)ntohs(servaddr.sin_port));
     Log(logbuf);
 
-    if (listen(listenfd, LISTENQ) == -1) {
-        perror("listen");
-        exit(1);
-    }
+	Listen(listenfd, LISTENQ);
 
     pid_t connpid;
 

@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
+#include <netinet/in.h>
+#include <strings.h>
 
 #include "netutils.h"
 
@@ -25,6 +27,13 @@ int Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { WRAPPER(b
 int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { WRAPPER(connect, sockfd, addr, addrlen); }
 
 int Listen(int sockfd, int backlog){ WRAPPER(listen, sockfd, backlog); }
+
+int Getsockname(int sockfd, struct sockaddr_in *addr)
+{
+    	bzero(addr, sizeof(struct sockaddr_in));
+	socklen_t sz = sizeof(struct sockaddr_in);
+	WRAPPER(getsockname, sockfd, (struct sockaddr*)addr, &sz);
+}
 
 void get_time(char buf[]){
 	struct timeval tp;

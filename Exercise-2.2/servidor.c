@@ -33,12 +33,7 @@ int main (int argc, char **argv) {
     Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
     //Nesse trecho do codigo computamos e imprimimos a porta em que o servidor está bound e que irá fazer listening, para que o cliente possa se conectar a essa porta
-    socklen_t sz = sizeof(servaddr);
-    if(getsockname(listenfd, (struct sockaddr*)&servaddr, &sz) == -1)
-    {
-        perror("getsockname");
-        exit(1);
-    }
+    Getsockname(listenfd, &servaddr);
 
     char logbuf[MAXDATASIZE + 1];
     snprintf(logbuf, sizeof(logbuf), "Bound to %d\n", (int)ntohs(servaddr.sin_port));

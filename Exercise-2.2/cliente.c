@@ -47,17 +47,12 @@ int main(int argc, char **argv) {
     Connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
     /* Codigo para obter (#IP, #porta local) da questao 5*/
-    bzero(&servaddr, sizeof(servaddr));
-    socklen_t sz = sizeof(servaddr);
-    if(getsockname(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
-    {
-        perror("getsockname");
-        exit(1);
-    }
+    Getsockname(sockfd, &servaddr);
 
     snprintf(logbuf, sizeof(logbuf), "Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
     Log(logbuf);
 
+    socklen_t sz;
     bzero(&servaddr, sizeof(servaddr));
     if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
     {

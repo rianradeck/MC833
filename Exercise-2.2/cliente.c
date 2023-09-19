@@ -17,27 +17,24 @@
 
 int main(int argc, char **argv) {
     int    sockfd, n;
-	int    recvline_offset = 0;
+    int    recvline_offset = 0;
     char   recvline[MAXLINE + 1];
     char   error[MAXLINE + 1];
     char   logbuf[MAXLINE + 1];
     struct sockaddr_in servaddr;
-	
-	//Adicionamos mais um parametro para que o cliente possa
-	//especificar qual porta remota ele deseja se conectar
+    
+    //Adicionamos mais um parametro para que o cliente possa
+    //especificar qual porta remota ele deseja se conectar
     if (argc != 3) {
         strcpy(error,"uso: ");
         strcat(error,argv[0]);
         strcat(error," <IPaddress>");
-		strcat(error," <Port>");
+        strcat(error," <Port>");
         perror(error);
         exit(1);
     }
 
-    if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("socket error");
-        exit(1);
-    }
+    sockfd = Socket(AF_INET, SOCK_STREAM, 0);
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
@@ -47,81 +44,78 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-        perror("connect error");
+    Connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+
+    /* Codigo para obter (#IP, #porta local) da questao 5*/
+    bzero(&servaddr, sizeof(servaddr));
+    socklen_t sz = sizeof(servaddr);
+    if(getsockname(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
+    {
+        perror("getsockname");
         exit(1);
     }
 
-	/* Codigo para obter (#IP, #porta local) da questao 5*/
-    bzero(&servaddr, sizeof(servaddr));
-	socklen_t sz = sizeof(servaddr);
-	if(getsockname(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
-	{
-		perror("getsockname");
-		exit(1);
-	}
-
-	snprintf(logbuf, sizeof(logbuf), "Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-	Log(logbuf);
+    snprintf(logbuf, sizeof(logbuf), "Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+    Log(logbuf);
 
     bzero(&servaddr, sizeof(servaddr));
-	if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
-	{
-		perror("getpeername");
-		exit(1);
-	}
-	snprintf(logbuf, sizeof(logbuf), "Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-	Log(logbuf);
+    if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
+    {
+        perror("getpeername");
+        exit(1);
+    }
+    snprintf(logbuf, sizeof(logbuf), "Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
+    Log(logbuf);
 
-	//char buff[MAXLINE + 1];
-	//fgets(buff, MAXLINE, stdin);
-	//write(sockfd, buff, strlen(buff));
+    //char buff[MAXLINE + 1];
+    //fgets(buff, MAXLINE, stdin);
+    //write(sockfd, buff, strlen(buff));
 
-	for(;;){
-	    while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
-			recvline_offset += n;
-			if(recvline[recvline_offset - 1] == '\n')
-				break;
-		}
+    for(;;){
+        while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
+            recvline_offset += n;
+            if(recvline[recvline_offset - 1] == '\n')
+                break;
+        }
 
-		if (n < 0) {
-			perror("read error");
-			exit(1);
-		}
+        if (n < 0) {
+            perror("read error");
+            exit(1);
+        }
 
-		recvline[recvline_offset] = 0;
+        recvline[recvline_offset] = 0;
 
-		puts("-------- RECIEVED FROM SERVER -----------");
-		if (fputs(recvline, stdout) == EOF) {
-			perror("fputs error");
-			exit(1);
-		}
-		puts("-----------------------------------------");
-		
-		if(strcmp(recvline, "SIMULE: CPU_INTENSIVA\n") == 0)
-		{
-			puts("Starting CPU stress");
-			sleep(5);
-			char response[] = "SIMULACAO: CPU_INTENSIVA CONCLUIDA\n";
-			write(sockfd, response, strlen(response));
-		}
-		else if(strcmp(recvline, "SIMULE: MEMORIA_INTENSIVA\n") == 0)
-		{
-			puts("Starting MEM stress");
-			sleep(5);
-			char response[] = "SIMULACAO: MEMORIA_INTENSIVA CONCLUIDA\n";
-			write(sockfd, response, strlen(response));
-		} else if(strcmp(recvline, "DC\n") == 0){
-			char response[] = "DISCONNECTED\n";
-			write(sockfd, response, strlen(response));
-			break;
-		} else {
-			char response[] = "OPERACAO INVALIDA\n";
-			write(sockfd, response, strlen(response));
-		}
-		recvline_offset = 0;
-	}
-	close(sockfd);
-	
+        puts("-------- RECIEVED FROM SERVER -----------");
+        if (fputs(recvline, stdout) == EOF) {
+            perror("fputs error");
+            exit(1);
+        }
+        puts("-----------------------------------------");
+        
+        if(strcmp(recvline, "SIMULE: CPU_INTENSIVA\n") == 0)
+        {
+            puts("Starting CPU stress");
+            sleep(5);
+            char response[] = "SIMULACAO: CPU_INTENSIVA CONCLUIDA\n";
+            write(sockfd, response, strlen(response));
+        }
+        else if(strcmp(recvline, "SIMULE: MEMORIA_INTENSIVA\n") == 0)
+        {
+            puts("Starting MEM stress");
+            sleep(5);
+            char response[] = "SIMULACAO: MEMORIA_INTENSIVA CONCLUIDA\n";
+            write(sockfd, response, strlen(response));
+        } else if(strcmp(recvline, "DC\n") == 0){
+            char response[] = "DISCONNECTED\n";
+            write(sockfd, response, strlen(response));
+            break;
+        } else {
+            char response[] = "OPERACAO INVALIDA\n";
+            write(sockfd, response, strlen(response));
+        }
+        recvline_offset = 0;
+    }
+    close(sockfd);
+    
     exit(0);
 }

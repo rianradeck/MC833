@@ -13,7 +13,7 @@
 #include "netutils.h"
 
 #define LISTENQ 10
-#define MAXDATASIZE 100
+#define MAXDATASIZE 4096
 
 int main (int argc, char **argv) {
     int    listenfd, connfd;
@@ -21,11 +21,7 @@ int main (int argc, char **argv) {
     char   buf[MAXDATASIZE + 1];
     time_t ticks;
 
-
-    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        exit(1);
-    }
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
@@ -34,10 +30,7 @@ int main (int argc, char **argv) {
     //disponivel para o socket (Questao 4)
     servaddr.sin_port        = htons(0);   
     
-    if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
-        perror("bind");
-        exit(1);
-    }
+    Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
     //Nesse trecho do codigo computamos e imprimimos a porta em que o servidor está bound e que irá fazer listening, para que o cliente possa se conectar a essa porta
     socklen_t sz = sizeof(servaddr);
@@ -89,18 +82,18 @@ int main (int argc, char **argv) {
             {
                 char cbuf[MAXDATASIZE + 1];
                 srand(time(NULL));
-                char s[30];
+                char cmd[30];
                 if(rand() % 2)
-                    strcpy(s, "SIMULE: MEMORIA_INTENSIVA\n");
+                    strcpy(cmd, "SIMULE: MEMORIA_INTENSIVA\n");
                 else
-                    strcpy(s, "SIMULE: CPU_INTENSIVA\n");
+                    strcpy(cmd, "SIMULE: CPU_INTENSIVA\n");
                 if(cnt == 0)
-                    strcpy(s, "DC\n");
+                    strcpy(cmd, "DC\n");
 
-                snprintf(cbuf, sizeof(cbuf), "%s", s);
+                snprintf(cbuf, sizeof(cbuf), "%s", cmd);
                 write(connfd, cbuf, strlen(cbuf));
                
-                snprintf(logbuf, sizeof(logbuf), "Sending -> %s", s);
+                snprintf(logbuf, sizeof(logbuf), "Sending -> %s", cmd);
                 Log(logbuf);
 
                 //Recebe dados do cliente. Recebe exatamente uma linha do stdin do cliente, então para quando recebe um '\n'
@@ -113,7 +106,7 @@ int main (int argc, char **argv) {
                     //     perror("fputs");
                     //     exit(1);
                     // }
-                    snprintf(logbuf, sizeof(logbuf) * 2, "Recieved -> %s", cbuf);
+                    snprintf(logbuf, sizeof(logbuf) + 30, "Recieved -> %s", cbuf);
                     Log(logbuf);
 
                     if(cbuf[n - 1] == '\n')
@@ -122,7 +115,7 @@ int main (int argc, char **argv) {
             }
 
             close(connfd);
-			exit(0);
+            exit(0);
         }        
     }
     return(0);

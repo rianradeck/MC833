@@ -19,7 +19,18 @@ int main (int argc, char **argv) {
     int    listenfd, connfd;
     struct sockaddr_in servaddr, peeraddr;
     char   buf[MAXDATASIZE + 1];
+    char   error[MAXDATASIZE + 1];
     time_t ticks;
+    int port = 0;
+
+	if (argc != 2) {
+		strcpy(error,"uso: ");
+        strcat(error,argv[0]);
+        strcat(error," <Port>");
+        perror(error);
+        exit(1);
+    }
+	port = atoi(argv[1]);
 
     listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -28,7 +39,7 @@ int main (int argc, char **argv) {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     //Escolhemos porta 0 para que o SO atribua automaticamente uma porta
     //disponivel para o socket (Questao 4)
-    servaddr.sin_port        = htons(0);   
+    servaddr.sin_port        = htons(port);   
     
     Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 

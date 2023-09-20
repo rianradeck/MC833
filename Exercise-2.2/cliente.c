@@ -22,8 +22,6 @@ int main(int argc, char **argv) {
     char   error[MAXLINE + 1];
     struct sockaddr_in servaddr;
     
-    //Adicionamos mais um parametro para que o cliente possa
-    //especificar qual porta remota ele deseja se conectar
     if (argc != 3) {
         strcpy(error,"uso: ");
         strcat(error,argv[0]);
@@ -45,13 +43,10 @@ int main(int argc, char **argv) {
 
     Connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
-    /* Codigo para obter (#IP, #porta local) da questao 5*/
     socklen_t sz = sizeof(servaddr);
     Getsockname(sockfd, &servaddr);
-
     printf("Local: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
 
-    //socklen_t sz;
     bzero(&servaddr, sizeof(servaddr));
     if(getpeername(sockfd, (struct sockaddr*)&servaddr, &sz) == -1)
     {
@@ -59,10 +54,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
     printf("Remote: %s %d\n", inet_ntoa(servaddr.sin_addr), (int)ntohs(servaddr.sin_port));
-
-    //char buff[MAXLINE + 1];
-    //fgets(buff, MAXLINE, stdin);
-    //write(sockfd, buff, strlen(buff));
 
     for(;;){
         while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {

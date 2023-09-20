@@ -41,16 +41,13 @@ int main (int argc, char **argv) {
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    //Escolhemos porta 0 para que o SO atribua automaticamente uma porta
-    //disponivel para o socket (Questao 4)
     servaddr.sin_port        = htons(port);   
     
     Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-    //Nesse trecho do codigo computamos e imprimimos a porta em que o servidor está bound e que irá fazer listening, para que o cliente possa se conectar a essa porta
     Getsockname(listenfd, &servaddr);
 
-    char logbuf[MAXDATASIZE + 1];
+    char logbuf[MAXDATASIZE + 31];
     snprintf(logbuf, sizeof(logbuf), "Bound to %d\n", (int)ntohs(servaddr.sin_port));
     Log(logbuf);
 
@@ -65,7 +62,6 @@ int main (int argc, char **argv) {
         {
             close(listenfd);
 
-            //Computa e imprime o ip e a porta do cliente: (Questao 6)
             socklen_t peersz = sizeof(peeraddr);
             if(getpeername(connfd, (struct sockaddr*)&peeraddr, &peersz) == -1)
             {
@@ -108,12 +104,8 @@ int main (int argc, char **argv) {
                 while((n = read(connfd, cbuf, MAXDATASIZE)) > 0)
                 {
                     cbuf[n] = 0;
-                    // if(fputs(cbuf, stdout) == EOF)
-                    // {
-                    //     perror("fputs");
-                    //     exit(1);
-                    // }
-                    snprintf(logbuf, sizeof(logbuf) + 30, "Recieved -> %s", cbuf);
+                   
+                    snprintf(logbuf, sizeof(logbuf), "Recieved -> %s", cbuf);
                     Log(logbuf);
 
                     if(cbuf[n - 1] == '\n')

@@ -12,29 +12,31 @@
 
 #include "netutils.h"
 
-#define LISTENQ 10
 #define MAXDATASIZE 4096
 
 int main (int argc, char **argv) {
-    FILE *fp;
-    fp = fopen("log.txt", "w");
-    fclose(fp);
-
     int    listenfd, connfd;
     struct sockaddr_in servaddr, peeraddr;
     char   buf[MAXDATASIZE + 1];
     char   error[MAXDATASIZE + 1];
     time_t ticks;
     int port = 0;
+    int backlog = 0;
 
-	if (argc != 2) {
-		strcpy(error,"uso: ");
+    if (argc != 3) {
+	strcpy(error,"uso: ");
         strcat(error,argv[0]);
         strcat(error," <Port>");
+	strcat(error," <Backlog>");
         perror(error);
         exit(1);
     }
-	port = atoi(argv[1]);
+    FILE *fp;
+    fp = fopen("log.txt", "w");
+    fclose(fp);
+
+    port = atoi(argv[1]);
+    backlog = atoi(argv[2]);
 
     listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -51,7 +53,7 @@ int main (int argc, char **argv) {
     snprintf(logbuf, sizeof(logbuf), "Bound to %d\n", (int)ntohs(servaddr.sin_port));
     Log(logbuf);
 
-	Listen(listenfd, LISTENQ);
+    Listen(listenfd, backlog);
 
     pid_t connpid;
 

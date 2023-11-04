@@ -24,10 +24,10 @@ int main (int argc, char **argv) {
     int backlog = 0;
 
     if (argc != 3) {
-	strcpy(error,"uso: ");
+    strcpy(error,"uso: ");
         strcat(error,argv[0]);
         strcat(error," <Port>");
-	strcat(error," <Backlog>");
+        strcat(error," <Backlog>");
         perror(error);
         exit(1);
     }
@@ -57,9 +57,14 @@ int main (int argc, char **argv) {
 
     pid_t connpid;
 
+    int cnt = 0;
+    printf("Backlog: %d\n", backlog);
     for ( ; ; ) {
+        sleep(1); // Adicione um sleep() na primeira linha do laço no servidor para poderem visualizar a mudança do backlog.
+        // continue;
         connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
-        
+        printf("CONEXAO %d - %d\n", ++cnt, connfd);
+        fflush(stdout);
         if((connpid = fork()) == 0)
         {
             close(listenfd);
@@ -70,8 +75,8 @@ int main (int argc, char **argv) {
                 perror("getpeername");
                 exit(1);
             }
-            snprintf(logbuf, sizeof(logbuf), "Remote client connected: %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port));
-            Log(logbuf);
+            snprintf(logbuf, sizeof(logbuf), "Remote client connected: %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port)); 
+            Log(logbuf); // Imprima no servidor IP e porta dos clientes conectados nele para identificar corretamente as conexões.
 
             ticks = time(NULL);
             snprintf(buf, sizeof(buf), "Hello from server!\nTime: %.24s\r\nPID: %d\n", ctime(&ticks), getpid());

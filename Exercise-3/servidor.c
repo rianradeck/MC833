@@ -9,10 +9,22 @@
 #include <time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
 
 #include "netutils.h"
 
 #define MAXDATASIZE 4096
+
+void sig_chld_handler(int signo)
+{
+	pid_t pid;
+	int stat;
+	//Itera sobre os processos filhos que já finalizaram sem bloquear 
+	//através da flag WNOHANG
+	while((pid = waitpid(-1, &stat, WNOHANG)) > 0)
+		printf("Child %d terminated\n", pid);
+	return;
+}
 
 int main (int argc, char **argv) {
     int    listenfd, connfd;
@@ -57,13 +69,15 @@ int main (int argc, char **argv) {
 
     pid_t connpid;
 
+	signal(SIGCHLD, sig_chld_handler);
+
     int cnt = 0;
     printf("Backlog: %d\n", backlog);
     for ( ; ; ) {
         sleep(1); // Adicione um sleep() na primeira linha do laço no servidor para poderem visualizar a mudança do backlog.
         // continue;
         connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
-        printf("CONEXAO %d - %d\n", ++cnt, connfd);
+        printf("CONEXAO %d\n", ++cnt);
         fflush(stdout);
         if((connpid = fork()) == 0)
         {

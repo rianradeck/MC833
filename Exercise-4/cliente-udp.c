@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
     strcpy(buf, "Hello, I am an UDP client.");
 
     if (sendto(sockfd, buf, strlen(buf) + 1, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-       tcperror("sendto()");
-       exit(2);
+        perror("read error");
+        exit(2);
     }
 
     while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {

@@ -2,27 +2,33 @@
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdlib.h>
 #include "netutils.h"
 
 #define TCP_PORT 25565
+#define UDP_PORT 1234
 #define LISTENQ 10
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 int main()
 {
-	int client[FD_SETSIZE];
-	for(int i = 0; i < FD_SETSIZE; ++i)
-		client[i] = -1;
+	int tcpclient;
 
 	int tcplistenfd = Socket(AF_INET, SOCK_STREAM, 0);
 	int udpboundfd = Socket(AF_INET, SOCK_DGRAM, 0);
-	struct sockaddr_in tcpaddr;
+	struct sockaddr_in tcpaddr, udpaddr;
 	bzero(&tcpaddr, sizeof(tcpaddr));
 	tcpaddr.sin_family = AF_INET;
 	tcpaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	tcpaddr.sin_port = htons(TCP_PORT);
 	
+	bzero(&udpaddr, sizeof(udpaddr));
+	udpaddr.sin_family = AF_INET;
+	udpaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	udpaddr.sin_port = htons(UDP_PORT);
+
+	Bind(udpboundfd, (struct sockaddr *)&udpaddr, sizeof(udpaddr));
 	Bind(tcplistenfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr));
 
 	Listen(tcplistenfd, LISTENQ);
@@ -31,9 +37,9 @@ int main()
 	fd_set allfds;
 	FD_ZERO(&allfds);
 	FD_SET(tcplistenfd, &allfds);
+	FD_SET(udpboundfd, &allfds);
 	
-	int maxfd = tcplistenfd;
-	int nfds = 0;
+	int maxfd = max(tcplistenfd, udpboundfd);
 
 	while(1)
 	{
@@ -41,42 +47,20 @@ int main()
 		int nready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(tcplistenfd, &readfds))
 		{
-			int connfd = Accept(tcplistenfd, NULL, NULL);
+			tcpclient = Accept(tcplistenfd, NULL, NULL);
 
-			{
-				int i;
-				for(i = 0; i < FD_SETSIZE; ++i)
-					if(client[i] < 0)
-					{
-						client[i] = connfd;
-						break;
-					}
-				if(i == FD_SETSIZE)
-				{
-					printf("TOO MANY CLIENTS");
-					return 0;
-				}
-				nfds = max(nfds, i);
-			}
-			
-			maxfd = max(maxfd, connfd);
-			if(--nready <= 0)
-				continue;
 		}
-
-		for(int i = 0; i < nfds; ++i)
+		if(FD_ISSET(udpboundfd, &readfds))
 		{
-			int curClient = client[i];
-			if(curClient < 0)
-				continue;
-			if(FD_ISSET(curClient, &readfds))
+			char buff[1024];
+			int read = recvfrom(udpboundfd, buff, sizeof(buff) - 1, 0, NULL, NULL);
+			if(read < 0)
 			{
-
+				printf("recvfrom errror\n");
+				exit(0);
 			}
-
-			if(--nready <= 0)
-				break;
+			buff[read] = 0;
+			printf("Recv from udp %s\n", buff);
 		}
-
 	}
 }

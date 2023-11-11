@@ -40,15 +40,18 @@ int main()
 	FD_SET(udpboundfd, &allfds);
 	
 	int maxfd = max(tcplistenfd, udpboundfd);
+	int clientConnected = 0;
 
 	while(1)
 	{
-		fd_set readfds;
+		fd_set readfds = allfds;
 		int nready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(tcplistenfd, &readfds))
 		{
 			tcpclient = Accept(tcplistenfd, NULL, NULL);
-
+			FD_SET(tcpclient, &allfds);
+			maxfd = max(maxfd, allfds);
+			clientConnected = 1;
 		}
 		if(FD_ISSET(udpboundfd, &readfds))
 		{

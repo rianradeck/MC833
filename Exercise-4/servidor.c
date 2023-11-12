@@ -13,7 +13,7 @@
 
 int main()
 {
-	int tcpclient;
+	int tcpclient = -1;
 
 	int tcplistenfd = Socket(AF_INET, SOCK_STREAM, 0);
 	int udpboundfd = Socket(AF_INET, SOCK_DGRAM, 0);
@@ -50,8 +50,20 @@ int main()
 		{
 			tcpclient = Accept(tcplistenfd, NULL, NULL);
 			FD_SET(tcpclient, &allfds);
-			maxfd = max(maxfd, allfds);
+			maxfd = max(maxfd, tcpclient);
 			clientConnected = 1;
+		}
+		if(tcpclient != -1 && FD_ISSET(tcpclient, &readfds))
+		{
+			char buff[1024];
+			int read = recv(tcpclient, buff, sizeof(buff) - 1, 0);
+			if(read < 0)
+			{
+				printf("recv error\n");
+				exit(0);
+			}
+			buff[read] = 0;
+			printf("Recv from tcp %s\n", buff);
 		}
 		if(FD_ISSET(udpboundfd, &readfds))
 		{

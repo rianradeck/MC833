@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 	{
 		fd_set readfds = allfds;
 		int nready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
-		if(FD_ISSET(sockfd, &allfds))
+		if(FD_ISSET(sockfd, &readfds))
 		{
 			if(read(sockfd, recvline, MAXLINE) <= 0)
 			{
@@ -59,15 +59,19 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			fputs(recvline, stdout);
+			fflush(stdout);
 		}
-		if(FD_ISSET(fileno(finput), &allfds))
+		if(FD_ISSET(fileno(finput), &readfds))
 		{
 			if(fgets(sendline, MAXLINE, finput) == NULL)
 			{
 				fputs(sendline, stdout);
 				exit(1);
 			}
-			write(sockfd, sendline, strlen(sendline));
+			if(write(sockfd, sendline, strlen(sendline)) < 0)
+			{
+				printf("Write error!\n");
+			}
 		}
 	}
 }

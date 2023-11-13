@@ -40,18 +40,26 @@ int main()
 	FD_SET(udpboundfd, &allfds);
 	
 	int maxfd = max(tcplistenfd, udpboundfd);
-	int clientConnected = 0;
 
 	while(1)
 	{
 		fd_set readfds = allfds;
-		int nready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
+		select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(tcplistenfd, &readfds))
 		{
 			tcpclient = Accept(tcplistenfd, NULL, NULL);
 			FD_SET(tcpclient, &allfds);
 			maxfd = max(maxfd, tcpclient);
-			clientConnected = 1;
+			
+			struct sockaddr_in peeraddr;
+			socklen_t peersz = sizeof(peeraddr);
+
+			if(getpeername(tcpclient, (struct sockaddr*)&peeraddr, &peersz) == -1)
+			{
+				perror("getpeername");
+				exit(1);
+			}
+			printf("TCP client connected %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port));
 		}
 		if(tcpclient != -1 && FD_ISSET(tcpclient, &readfds))
 		{
@@ -63,7 +71,8 @@ int main()
 				exit(0);
 			}
 			buff[read] = 0;
-			printf("Recv from tcp %s\n", buff);
+			printf("Recv from tcp %s %d\n", buff, read);
+			send(tcpclient, buff, read, 0);
 		}
 		if(FD_ISSET(udpboundfd, &readfds))
 		{
@@ -75,7 +84,7 @@ int main()
 				exit(0);
 			}
 			buff[read] = 0;
-			printf("Recv from udp %s\n", buff);
+			printf("Message from UDP client: %s\n", buff);
 		}
 	}
 }

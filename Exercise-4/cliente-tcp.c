@@ -9,6 +9,8 @@
 #define MAXLINE 4096
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+//TODO: Implement shutdown()
+
 int main(int argc, char **argv)
 {
 	char sendline[MAXLINE + 1], recvline[MAXLINE + 1];
@@ -50,14 +52,15 @@ int main(int argc, char **argv)
 	while (1)
 	{
 		fd_set readfds = allfds;
-		int nready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
+		select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(sockfd, &readfds))
 		{
-			if(read(sockfd, recvline, MAXLINE) <= 0)
+			if(recv(sockfd, recvline, MAXLINE, 0) <= 0)
 			{
 				fprintf(stderr, "read error");
 				exit(1);
 			}
+			printf("Received: ");
 			fputs(recvline, stdout);
 			fflush(stdout);
 		}
@@ -68,7 +71,7 @@ int main(int argc, char **argv)
 				fputs(sendline, stdout);
 				exit(1);
 			}
-			if(write(sockfd, sendline, strlen(sendline)) < 0)
+			if(send(sockfd, sendline, strlen(sendline), 0) < 0)
 			{
 				printf("Write error!\n");
 			}

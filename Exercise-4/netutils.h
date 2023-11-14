@@ -14,3 +14,5 @@ int Listen(int sockfd, int backlog);
 void Log(const char buf[]);
 
 int Getsockname(int sockfd, struct sockaddr_in *addr);
+
+void get_time(char buf[]);

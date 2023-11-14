@@ -51,7 +51,8 @@ int main(int argc, char **argv)
 	recvline[MAXLINE] = 0;
 	while (1)
 	{
-		fd_set readfds = allfds;
+		fd_set readfds;// = allfds;
+		memcpy(&readfds, &allfds, sizeof(fd_set));
 		select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(sockfd, &readfds))
 		{

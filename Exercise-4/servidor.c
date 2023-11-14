@@ -43,7 +43,8 @@ int main()
 
 	while(1)
 	{
-		fd_set readfds = allfds;
+		fd_set readfds;//* = allfds;
+		memcpy(&readfds, &allfds, sizeof(fd_set));
 		select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if(FD_ISSET(tcplistenfd, &readfds))
 		{
@@ -77,14 +78,27 @@ int main()
 		if(FD_ISSET(udpboundfd, &readfds))
 		{
 			char buff[1024];
-			int read = recvfrom(udpboundfd, buff, sizeof(buff) - 1, 0, NULL, NULL);
+			struct sockaddr_in udp_addr;
+			socklen_t addrlen = sizeof(udp_addr);
+
+			int read = recvfrom(udpboundfd, buff, sizeof(buff) - 1, 0, (struct sockaddr*)&udp_addr, &addrlen);
 			if(read < 0)
 			{
-				printf("recvfrom errror\n");
+				perror("recvfrom errror");
 				exit(0);
 			}
 			buff[read] = 0;
 			printf("Message from UDP client: %s\n", buff);
+
+			printf("UDP client %s: %d\n", inet_ntoa(udp_addr.sin_addr), ntohs(udp_addr.sin_port));
+
+			sprintf(buff, "Hello Client UDP\n");
+			if(sendto(udpboundfd, buff, strlen(buff) + 1, 0, (struct sockaddr*)&udp_addr, addrlen) == -1)
+			{
+				perror("Sendto error");
+				exit(0);
+			}
+			printf("Message %s sent to udp client\n", buff);
 		}
 	}
 }

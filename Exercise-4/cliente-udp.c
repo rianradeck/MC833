@@ -40,17 +40,18 @@ int main(int argc, char **argv) {
     servaddr.sin_addr.s_addr = inet_addr(argv[1]); 
 
     Connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	socklen_t addrsz = sizeof(struct sockaddr_in);
 
     strcpy(buf, "Hello, I am an UDP client.");
 
-    if (sendto(sockfd, buf, strlen(buf) + 1, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+    if (sendto(sockfd, buf, strlen(buf) + 1, 0, (struct sockaddr *) NULL, addrsz) < 0) {
         perror("read error");
         exit(2);
     }
 
-    while ( (n = read(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset)) > 0) {
+    while ( (n = recvfrom(sockfd, recvline + recvline_offset, MAXLINE - recvline_offset, 0, NULL, NULL)) > 0) {
         recvline_offset += n;
-        if(recvline[recvline_offset - 1] == '\n')
+        if(recvline[recvline_offset - 2] == '\n')
             break;
     }
 

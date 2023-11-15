@@ -61,6 +61,11 @@ int main()
 				exit(1);
 			}
 			printf("TCP client connected %s: %d\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port));
+
+			char buff[2048], time_str[1024];
+			get_time(time_str);
+			sprintf(buff, "Hello from server to client in:\nIP address: %s\nPort: %d\nTime:%s\n", inet_ntoa(peeraddr.sin_addr), ntohs(peeraddr.sin_port), time_str);
+			send(tcpclient, buff, strlen(buff) + 1, 0);
 		}
 		if(tcpclient != -1 && FD_ISSET(tcpclient, &readfds))
 		{
@@ -73,7 +78,7 @@ int main()
 			}
 			buff[read] = 0;
 			printf("Recv from tcp %s %d\n", buff, read);
-			send(tcpclient, buff, read, 0);
+			send(tcpclient, buff, read + 1, 0);
 		}
 		if(FD_ISSET(udpboundfd, &readfds))
 		{
